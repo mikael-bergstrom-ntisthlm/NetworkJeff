@@ -1,8 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
-public class PlayerController : MonoBehaviour {
+public class PlayerController : MonoBehaviour
+{
 
   [SerializeField]
   float movementSpeed = 3f; // Unity-enheter per sekund
@@ -19,33 +21,37 @@ public class PlayerController : MonoBehaviour {
   [SerializeField]
   float timeBetweenShots = 0.5f;
   float timeSinceLastShot = 0f;
-	
-	void Update () {
 
-    float yRotation = Input.GetAxisRaw("Horizontal") * rotationSpeed * Time.deltaTime;
-    float zMovement = Input.GetAxisRaw("Vertical") * movementSpeed * Time.deltaTime;
+  Vector2 moveInput = new();
 
-    Vector3 rotationVector = new Vector3(0, yRotation, 0);
-    Vector3 movementVector = new Vector3(0, 0, zMovement);
-
-    transform.Rotate(rotationVector);
-    transform.Translate(movementVector);
-
-    timeSinceLastShot += Time.deltaTime;
-
-    if (Input.GetAxisRaw("Fire1") > 0)
-    {
-      if (timeSinceLastShot > timeBetweenShots)
-      {
-        Fire();
-        timeSinceLastShot = 0;
-      }
-    }
-
-	}
-
-  void Fire()
+  void Update()
   {
-    GameObject bullet = Instantiate(bulletPrefab, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
+    // VROOM VROOM
+
+    float yRotation = moveInput.x * rotationSpeed * Time.deltaTime;
+    float zMovement = moveInput.y * movementSpeed * Time.deltaTime;
+
+    Vector3 movementVector = transform.forward * zMovement;
+
+    GetComponent<CharacterController>().Move(movementVector);
+    transform.Rotate(Vector3.up, yRotation);
+
+    // BANG BANG DELAY
+    if (timeSinceLastShot < timeBetweenShots) timeSinceLastShot += Time.deltaTime;
+  }
+
+  void OnMove(InputValue value)
+  {
+    moveInput = value.Get<Vector2>();
+  }
+
+  void OnFire()
+  {
+    // BANG BANG
+    if (timeSinceLastShot > timeBetweenShots)
+    {
+      GameObject bullet = Instantiate(bulletPrefab, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
+      timeSinceLastShot = 0;
+    }
   }
 }
